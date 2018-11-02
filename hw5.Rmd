@@ -12,39 +12,59 @@ set.seed(1)
 ```
 
 ## Problem 1
-Inspecting the file path
+
+Inspecting the file path and file names in the zip.
 ```{r}
 file_path <- "./data/"
 length(list.files(file_path))  # How many files are there?
-list.files(file_path)[1:10]  # Show first 10 names
+list.files(file_path)  # Show all names
 list.files(file_path)[11:20]  # Show last 10 names
+
 ```
 
-Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
+Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time.
 
 
+### Construct a dataframe using the `list.files` function
 ```{r}
-
+## Construct a function to read the csv file
 read_sheet <- function(path) {
-   readr::read_csv(str_c(path, "csv", sep = "."))
+   df = readr::read_csv(path) %>% 
+   janitor::clean_names()
+   
+   df
 }
 
-tb_base_con = "./data/con_"
-tb_base_exp = "./data/exp_"
-vec_con = str_c(c(tb_base_con, tb_base_exp), c('0':'10', '0':'10'))
+## Construct the path 
 
-sheet_df = map_df(vec_con, read_sheet)
+base = "./data/"
+p = list.files(file_path)[1:10] 
+vec_name = str_c(base, c(p))
 
-sheet_df 
+control_df = map_df(vec_name, read_sheet)
+
 ```
+
+* Tidy the result: file names include the subject ID and arm.
+```{r}
+control_df = control_df %>% 
+  mutate(ID = as.factor(1:10), Group = "control" ) %>% 
+  select(Group, ID, week_1:week_8) 
+```
+
+### Spaghetti plot 
+```{r}
+
+```
+
+
+* Comment on differences between groups.
+
+
+## Problem 2
 
 ```{r}
 
-vec_exp = str_c(tb_base_con, 1:10)
-
-exp_df = map_df(vec_con, read_sheet)
-
-bind_rows(
 ```
 
 
