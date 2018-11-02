@@ -26,11 +26,12 @@ Create a tidy dataframe containing data from all participants, including the sub
 ```{r}
 
 read_sheet <- function(path) {
-   readr::read_csv(str_c(path, ".csv"))
+   readr::read_csv(str_c(path, "csv", sep = "."))
 }
 
-tb_base_con = "./data/con_0"
-vec_con = str_c(tb_base_con, 1:9)
+tb_base_con = "./data/con_"
+tb_base_exp = "./data/exp_"
+vec_con = str_c(c(tb_base_con, tb_base_exp), c('0':'10', '0':'10'))
 
 sheet_df = map_df(vec_con, read_sheet)
 
@@ -38,12 +39,12 @@ sheet_df
 ```
 
 ```{r}
-tb_base_exp = "./data/exp_.csv"
+
 vec_exp = str_c(tb_base_con, 1:10)
-output = vector("list", 10)
 
+exp_df = map_df(vec_con, read_sheet)
 
- bind_rows(
+bind_rows(
 ```
 
 
