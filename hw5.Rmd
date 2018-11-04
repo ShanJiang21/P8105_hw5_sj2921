@@ -7,6 +7,7 @@ output: github_document
 ```{r}
 library(tidyverse)
 library(rvest)
+library(ggplot2)
 
 set.seed(1)
 ```
@@ -38,7 +39,7 @@ read_sheet <- function(path) {
 ## Construct the path 
 
 base = "./data/"
-p = list.files(file_path)[1:10] 
+p = list.files(file_path)
 vec_name = str_c(base, c(p))
 
 control_df = map_df(vec_name, read_sheet)
@@ -47,21 +48,39 @@ control_df = map_df(vec_name, read_sheet)
 
 * Tidy the result: file names include the subject ID and arm.
 ```{r}
+# Calling the ifelse function within mutate to label 2 Arms
 control_df = control_df %>% 
-  mutate(ID = as.factor(1:10), Group = "control" ) %>% 
-  select(Group, ID, week_1:week_8) 
+  mutate(ID = 1:20) %>% 
+  mutate(Arm = ifelse(ID < 11, yes = "control", no = "exprimental")) %>%  
+  select(Arm, ID, week_1:week_8) %>% 
+  gather(key = No_week, value = measurement, week_1:week_8)
+
 ```
 
 ### Spaghetti plot 
 ```{r}
-
+control_df %>% 
+ggplot(aes(x = No_week, y = measurement, group = ID)) +
+  geom_line(aes(color = Arm)) + 
+  facet_wrap(~ID) +
+ theme(text = element_text(size = 9),
+        axis.text.x = element_text(angle=90, hjust=1)) 
 ```
-
-
 * Comment on differences between groups.
+From the above faceting Graph, we showed the absolute value of measurement and the gap of the two groups. 
+1. On averge, subjects in the Experimental group attains a higher measurement value than the control group compared to the control group from week 1 to 8. 
+
 
 
 ## Problem 2
+Import the raw data.
+```{r}
+require(RCurl)
+homicide_raw = read.csv( text = getURL("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"))
+```
+
+### Describe the raw data.
+The raw data is made up three parts of sheets. 
 
 ```{r}
 
