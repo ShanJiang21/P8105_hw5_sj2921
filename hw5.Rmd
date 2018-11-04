@@ -8,6 +8,7 @@ output: github_document
 library(tidyverse)
 library(rvest)
 library(ggplot2)
+library(broom)
 
 set.seed(1)
 ```
@@ -49,7 +50,7 @@ control_df = map_df(vec_name, read_sheet)
 * Tidy the result: file names include the subject ID and arm.
 ```{r}
 # Calling the ifelse function within mutate to label 2 Arms
-control_df = control_df %>% 
+control_df = control_df %>% View()
   mutate(ID = 1:20) %>% 
   mutate(Arm = ifelse(ID < 11, yes = "control", no = "exprimental")) %>%  
   select(Arm, ID, week_1:week_8) %>% 
@@ -68,7 +69,7 @@ ggplot(aes(x = No_week, y = measurement, group = ID)) +
   geom_line(aes(color = Arm)) + 
   facet_wrap(~ID) +
  theme(text = element_text(size = 9),
-        axis.text.x = element_text(angle=75, hjust=1)) 
+        axis.text.x = element_text(angle = 75, hjust = 1)) 
 
 graph_1
 graph_2
@@ -106,7 +107,7 @@ homicide_raw = homicide_raw %>%
 ```{r}
 total_n  = homicide_raw %>% 
   group_by(city_state) %>% 
-  summarize(n = n())
+  summarize(n = n()) %>% 
 ```
 
 * The number of unsolved homicides grouped by cities.
@@ -114,13 +115,37 @@ total_n  = homicide_raw %>%
 unsolved_n  = homicide_raw %>% 
   group_by(city_state) %>%
   filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
-  summarize(n = n())
+  summarize(n = n()) %>% 
 ```
 
 * Use the `prop.test` function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object.
 ```{r}
-prop.test(x = , alternative = "two.sided",
+Prop_df = left_join(unsolved_n, total_n, by = "city_state") %>% 
+          filter(city_state == "Baltimore,MD")
+
+# apply the broom::tidy to this object
+result = prop.test(Prop_df$n.x,  Prop_df$n.y,
+          alternative = "two.sided",
           correct = TRUE)
+
+result_tidy = tidy(result) %>% 
+ 
+# pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+estimated_prop = function(i){
+    estimate = pull(result_tidy[i])
+    return(estimate)
+}
+estimate = estimated_prop(1)
+conf.low = estimated_prop(5)
+conf.high = estimated_prop(6)
+
 ```
+
+
+```{r}
+
+```
+
+Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
 
 
