@@ -67,23 +67,50 @@ ggplot(aes(x = No_week, y = measurement, group = ID)) +
         axis.text.x = element_text(angle=90, hjust=1)) 
 ```
 * Comment on differences between groups.
-From the above faceting Graph, we showed the absolute value of measurement and the gap of the two groups. 
-1. On averge, subjects in the Experimental group attains a higher measurement value than the control group compared to the control group from week 1 to 8. 
 
+From the above faceting Graph, we showed the absolute value of measurement and the gap of the two groups. 
+
+1. On averge, subjects in the Experimental group attains a higher measurement value than that of subjects in control group from week 1 to 8. 
+2. The experimental group presents a trend of increase across the weeks, which may indicates the exposure's potential effect on the patients with the effect of time. 
+3. The control group patients acquired a more stable measurement in its outcome value, so it may indicates a lack of effect of exposure. 
 
 
 ## Problem 2
+
 Import the raw data.
 ```{r}
 require(RCurl)
 homicide_raw = read.csv( text = getURL("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"))
 ```
 
-### Describe the raw data.
-The raw data is made up three parts of sheets. 
+### Describe the raw data
+
+The raw data focus on the homicide topic, which is originated from Washington Post github page. It organizes a total of `nrow(homicide_raw)` cases from the year of 2007 to 2015, containing `ncol(homicide_raw)` variables ranging from the demographical variables of the id, name, gender, age and race of the victim to the geographical and time information of the case. 
 
 ```{r}
+homicide_raw = homicide_raw %>% 
+  mutate(city_state = str_c(city, state, sep = "," )) %>% 
+  mutate(city_state = as.factor(city_state))
 
 ```
 
+* The total number of homicides grouped by cities.
+```{r}
+total_n  = homicide_raw %>% 
+  group_by(city_state) %>% 
+  summarize(n = n())
+```
+
+The number of unsolved homicides grouped by cities.
+```{r}
+unsolved_n  = homicide_raw %>% 
+  group_by(city_state) %>%
+  filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
+  summarize(n = n())
+```
+
+use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object,
+```{r}
+
+```
 
