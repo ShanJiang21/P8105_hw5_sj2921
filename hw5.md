@@ -266,31 +266,11 @@ city_sum = map_df(.x = raw_result, ~.x %>%
 ### Plot that shows the estimates and CIs for each city
 
 Organize cities according to the proportion of unsolved homicides.
-
-``` r
-city_sum %>% 
-  mutate(city_state = factor(city_state, levels = city_state[order(estimate)])) %>% 
-  ggplot(aes(x = city_state , y = estimate)) +
-  ylim(0, 0.8) +
-  geom_point(size = 0.3 ) +
-  geom_errorbar(aes(ymin = conf.low , ymax = conf.high), width = .4) +
-  theme_bw() +
-  labs(
-    x = "city and state",
-    y = "ratio: unsolved cases in total cases",
-    title = "Unsolved cases ratio in total cases across 50 years in the U.S",
-    caption = "Data from the Washington Post"
-  ) +
-  theme(
-    axis.text.x = element_text(angle = 90, size = 7)
-  ) 
-```
-
 ![](hw5_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
   - Comments: The 50 cities in the dataset shows that Chicago is the
     city where the cases are not solved are the most, and it keeps a
-    nearly 60% homicide cases unsettled.
+    nearly 75% homicide cases unsettled.
 
   - Richmond keeps the lowest rate of unsolved cases ratio among the 50
-    cities(around 20%).
+    cities(around 25%).
