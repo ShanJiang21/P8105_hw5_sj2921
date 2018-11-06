@@ -7,14 +7,14 @@ Shan Jiang
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ────────────────────────────────────── tidyverse 1.2.1 ──
+    ## ── Attaching packages ─────────────────────────────────── tidyverse 1.2.1 ──
 
     ## ✔ ggplot2 3.0.0     ✔ purrr   0.2.5
     ## ✔ tibble  1.4.2     ✔ dplyr   0.7.6
     ## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
     ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 
-    ## ── Conflicts ───────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ────────────────────────────────────── tidyverse_conflicts() ──
     ## ✖ dplyr::filter() masks stats::filter()
     ## ✖ dplyr::lag()    masks stats::lag()
 
@@ -37,6 +37,7 @@ library(rvest)
 
 ``` r
 library(ggplot2)
+library(broom)
 
 set.seed(1)
 ```
@@ -99,7 +100,7 @@ control_df = map_df(vec_name, read_sheet)
 # Calling the ifelse function within mutate to label 2 Arms
 control_df = control_df %>% 
   mutate(ID = 1:20) %>% 
-  mutate(Arm = ifelse(ID < 11, yes = "control", no = "exprimental")) %>%  
+  mutate(Arm = ifelse(ID < 11, yes = "control", no = "exprimental")) %>%
   select(Arm, ID, week_1:week_8) %>% 
   gather(key = No_week, value = measurement, week_1:week_8)
 ```
@@ -107,15 +108,27 @@ control_df = control_df %>%
 ### Spaghetti plot
 
 ``` r
-control_df %>% 
+graph_1 = control_df %>% 
+  ggplot(aes(x = No_week, y = measurement, group = ID)) +
+  geom_line(aes(color = Arm))
+
+graph_2 = control_df %>% 
 ggplot(aes(x = No_week, y = measurement, group = ID)) +
   geom_line(aes(color = Arm)) + 
   facet_wrap(~ID) +
  theme(text = element_text(size = 9),
-        axis.text.x = element_text(angle=90, hjust=1)) 
+        axis.text.x = element_text(angle = 75, hjust = 1)) 
+
+graph_1
 ```
 
 ![](hw5_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+graph_2
+```
+
+![](hw5_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ##### Comment on differences between groups.
 
@@ -162,32 +175,122 @@ the year of 2007 to 2015, containing 12 variables ranging from the
 demographical variables of the id, name, gender, age and race of the
 victim to the geographical and time information of the case.
 
+Next, we make a summary of the data in 51 US cities.
+
 ``` r
 homicide_raw = homicide_raw %>% 
   mutate(city_state = str_c(city, state, sep = "," )) %>% 
-  mutate(city_state = as.factor(city_state))
+  mutate(city_state = as.factor(city_state)) %>% 
+  group_by(city_state) 
 ```
 
-  - The total number of homicides grouped by cities.
+  - The total number of homicides grouped by cities, total city = 51.
 
 <!-- end list -->
 
 ``` r
 total_n  = homicide_raw %>% 
-  group_by(city_state) %>% 
-  summarize(n = n())
+  group_by(city_state) %>%
+  summarize(n = n()) 
 ```
 
-  - The number of unsolved homicides grouped by cities.
+  - The number of unsolved homicides grouped by cities, total city = 50.
 
 <!-- end list -->
 
 ``` r
 unsolved_n  = homicide_raw %>% 
   group_by(city_state) %>%
-  filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
-  summarize(n = n())
+  filter(disposition %in% c("Closed without arrest", "Open/No arrest"))%>% 
+  summarize(n = n()) 
+
+## Summary of dataframe
+homicide_sum = left_join(unsolved_n, total_n, by = "city_state") %>% 
+  rename(unsolved =  n.x , total_cases = n.y )
+
+head(homicide_sum)
 ```
 
-  - Use the `prop.test` function to estimate the proportion of homicides
-    that are unsolved; save the output of prop.test as an R object.
+    ## # A tibble: 6 x 3
+    ##   city_state     unsolved total_cases
+    ##   <fct>             <int>       <int>
+    ## 1 Albuquerque,NM      146         378
+    ## 2 Atlanta,GA          373         973
+    ## 3 Baltimore,MD       1825        2827
+    ## 4 Baton Rouge,LA      196         424
+    ## 5 Birmingham,AL       347         800
+    ## 6 Boston,MA           310         614
+
+### Baltimore homicide rate test.
+
+``` r
+Bal_df = homicide_sum  %>% 
+          filter(city_state == "Baltimore,MD")
+
+# apply the broom::tidy to this object
+result = prop.test(Bal_df$unsolved, Bal_df$total_cases,
+          alternative = "two.sided",
+          correct = TRUE)
+
+bal_tidy = tidy(result) 
+ 
+# pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+estimated_prop = function(i){
+    estimate = pull(bal_tidy[i])
+    return(estimate)
+}
+
+tibble(estimate = estimated_prop(1),
+conf.low = estimated_prop(5),
+conf.high = estimated_prop(6))
+```
+
+    ## # A tibble: 1 x 3
+    ##   estimate conf.low conf.high
+    ##      <dbl>    <dbl>     <dbl>
+    ## 1    0.646    0.628     0.663
+
+### All cities: Use the `prop.test` function for 50 cities.
+
+``` r
+raw_result = map2(.x = homicide_sum$unsolved, .y = homicide_sum$total_cases, ~prop.test(.x, .y)) 
+
+## Estimate and confidence interval for each city 
+city_sum = map_df(.x = raw_result, ~.x %>% 
+                    broom::tidy(.x) %>% 
+                    select(estimate, conf.low, conf.high)) %>% 
+  mutate(city_state = homicide_sum$city_state) %>% 
+  select(city_state, everything())
+```
+
+### Plot that shows the estimates and CIs for each city
+
+Organize cities according to the proportion of unsolved homicides.
+
+``` r
+city_sum %>% 
+  mutate(city_state = factor(city_state, levels = city_state[order(estimate)])) %>% 
+  ggplot(aes(x = city_state , y = estimate)) +
+  ylim(0, 0.8) +
+  geom_point(size = 0.3 ) +
+  geom_errorbar(aes(ymin = conf.low , ymax = conf.high), width = .4) +
+  theme_bw() +
+  labs(
+    x = "city and state",
+    y = "ratio: unsolved cases in total cases",
+    title = "Unsolved cases ratio in total cases across 50 years in the U.S",
+    caption = "Data from the Washington Post"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 90, size = 7)
+  ) 
+```
+
+![](hw5_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+  - Comments: The 50 cities in the dataset shows that Chicago is the
+    city where the cases are not solved are the most, and it keeps a
+    nearly 60% homicide cases unsettled.
+
+  - Richmond keeps the lowest rate of unsolved cases ratio among the 50
+    cities(around 20%).
