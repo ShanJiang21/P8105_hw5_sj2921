@@ -50,9 +50,9 @@ control_df = map_df(vec_name, read_sheet)
 * Tidy the result: file names include the subject ID and arm.
 ```{r}
 # Calling the ifelse function within mutate to label 2 Arms
-control_df = control_df %>% View()
+control_df = control_df %>% 
   mutate(ID = 1:20) %>% 
-  mutate(Arm = ifelse(ID < 11, yes = "control", no = "exprimental")) %>%  
+  mutate(Arm = ifelse(ID < 11, yes = "control", no = "exprimental")) %>%
   select(Arm, ID, week_1:week_8) %>% 
   gather(key = No_week, value = measurement, week_1:week_8)
 
@@ -128,11 +128,11 @@ head(homicide_sum)
 
 ### Baltimore homicide rate test.  
 ```{r}
-Bal_df = left_join(unsolved_n, total_n, by = "city_state") %>% 
+Bal_df = homicide_sum  %>% 
           filter(city_state == "Baltimore,MD")
 
 # apply the broom::tidy to this object
-result = prop.test(Bal_df$n.x, Bal_df$n.y,
+result = prop.test(Bal_df$unsolved, Bal_df$total_cases,
           alternative = "two.sided",
           correct = TRUE)
 
@@ -144,50 +144,51 @@ estimated_prop = function(i){
     return(estimate)
 }
 
-estimate = estimated_prop(1)
-conf.low = estimated_prop(5)
-conf.high = estimated_prop(6)
+tibble(estimate = estimated_prop(1),
+conf.low = estimated_prop(5),
+conf.high = estimated_prop(6))
 
 ```
 
 ### All cities: Use the `prop.test` function for 50 cities.
 ```{r}
-city_df = left_join(unsolved_n, total_n, by = "city_state") %>% 
-  mutate( unsolved = n.x, total = n.y) %>% 
-  select( city_state, unsolved, total)
-  
+raw_result = map2(.x = homicide_sum$unsolved, .y = homicide_sum$total_cases, ~prop.test(.x, .y)) 
 
-## confidence interval for each.  
-city = homicide_raw %>% 
-   group_by(city_state) %>% 
-   nest
+## Estimate and confidence interval for each city 
+city_sum = map_df(.x = raw_result, ~.x %>% 
+                    broom::tidy(.x) %>% 
+                    select(estimate, conf.low, conf.high)) %>% 
+  mutate(city_state = homicide_sum$city_state) %>% 
+  select(city_state, everything())
 
-un2 = homicide_raw %>% 
-  group_by(city_state) %>%
-  filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
-  distinct(city_state)
-
-anti_join(city, un2, by = "city_state") %>% View()
-
-
-
-sim_results = 
-  tibble(i = 1:50) %>% 
-  mutate(
-    estimate_dfs = map(.x = beta1_true, ~simulate_n_regressions(n_runs = 10000, n = 30, beta1 = .x))
-  )  
-  
- sim_results %>% 
-  group_by(city_state) %>% 
-  nest() %>% 
-  mutate(
-    all = map_dbl(.x = data, ~ .x %>% pull(estimate) %>% ),
-    signif = map_dbl(.x = data, ~ .x %>% filter(significant == 1) %>% pull(estimate) %>% mean)
-  ) %>% 
-  select(-data) %>% 
-  gather(key = results, value = average, all:signif) 
 ```
 
-Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+###  Plot that shows the estimates and CIs for each city 
+
+Organize cities according to the proportion of unsolved homicides.
+```{r}
+city_sum %>% 
+  mutate(city_state <- factor(city_sum$city_state, levels = city_sum$city_state[order(city_sum$estimate)])) %>% 
+  ggplot(aes(x = city_state , y = estimate)) +
+  geom_bar(stat = "identity", 
+           aes(fill = city_state), 
+           position = position_dodge()) +
+  geom_errorbar(aes(ymin = conf.low , ymax = conf.high), width = .2,
+                 position = position_dodge(.9)) +
+  theme_classic() +
+  labs(
+    x = "city and state",
+    y = "ratio: unsolved cases in total cases"
+  ) +
+  theme(
+    legend.key = element_rect(colour = 'purple', fill = 'pink', size = 0.03, linetype = 'dashed'),
+    legend.direction = "horizontal",
+    legend.position = "bottom", 
+    axis.text.x = element_text(angle = 90, size = 7)
+  )
+
+```
+
+* Comments: The 50 
 
 
