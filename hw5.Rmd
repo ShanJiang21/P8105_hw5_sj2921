@@ -166,7 +166,7 @@ city_sum = map_df(.x = raw_result, ~.x %>%
 ###  Plot that shows the estimates and CIs for each city 
 
 Organize cities according to the proportion of unsolved homicides.
-```{r fig.width= 16, fig.height= 12,echo=FALSE}
+```{r fig.width= 10, fig.height= 9,echo=FALSE}
 city_sum %>% 
   mutate(city_state = factor(city_state, levels = city_state[order(estimate)])) %>% 
   ggplot(aes(x = city_state , y = estimate, color = city_state)) +
