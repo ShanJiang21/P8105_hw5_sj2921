@@ -21,7 +21,6 @@ file_path <- "./data/"
 length(list.files(file_path))  # How many files are there?
 list.files(file_path)  # Show all names
 
-
 ```
 
 Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time.
@@ -47,7 +46,7 @@ control_df = map_df(vec_name, read_sheet)
 
 ```
 
-* Tidy the result: file names include the subject ID and arm.
+#### Tidy the result: file names include the subject ID and arm.
 ```{r}
 # Calling the ifelse function within mutate to label 2 Arms
 control_df = control_df %>% 
@@ -58,7 +57,7 @@ control_df = control_df %>%
 
 ```
 
-### Spaghetti plot 
+## Spaghetti plot 
 ```{r}
 graph_1 = control_df %>% 
   ggplot(aes(x = No_week, y = measurement, group = ID)) +
