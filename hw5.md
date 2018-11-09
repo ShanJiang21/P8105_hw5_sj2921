@@ -7,14 +7,14 @@ Shan Jiang
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ─────────────────────────────────────────── tidyverse 1.2.1 ──
+    ## ── Attaching packages ────────────────────────────────────────── tidyverse 1.2.1 ──
 
     ## ✔ ggplot2 3.0.0     ✔ purrr   0.2.5
     ## ✔ tibble  1.4.2     ✔ dplyr   0.7.6
     ## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
     ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 
-    ## ── Conflicts ────────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ───────────────────────────────────────────── tidyverse_conflicts() ──
     ## ✖ dplyr::filter() masks stats::filter()
     ## ✖ dplyr::lag()    masks stats::lag()
 
@@ -62,13 +62,6 @@ list.files(file_path)  # Show all names
     ## [11] "exp_01.csv" "exp_02.csv" "exp_03.csv" "exp_04.csv" "exp_05.csv"
     ## [16] "exp_06.csv" "exp_07.csv" "exp_08.csv" "exp_09.csv" "exp_10.csv"
 
-``` r
-list.files(file_path)[11:20]  # Show last 10 names
-```
-
-    ##  [1] "exp_01.csv" "exp_02.csv" "exp_03.csv" "exp_04.csv" "exp_05.csv"
-    ##  [6] "exp_06.csv" "exp_07.csv" "exp_08.csv" "exp_09.csv" "exp_10.csv"
-
 Create a tidy dataframe containing data from all participants, including
 the subject ID, arm, and observations over time.
 
@@ -92,9 +85,7 @@ vec_name = str_c(base, c(p))
 control_df = map_df(vec_name, read_sheet)
 ```
 
-  - Tidy the result: file names include the subject ID and arm.
-
-<!-- end list -->
+#### Tidy the result: file names include the subject ID and arm.
 
 ``` r
 # Calling the ifelse function within mutate to label 2 Arms
@@ -105,7 +96,7 @@ control_df = control_df %>%
   gather(key = No_week, value = measurement, week_1:week_8)
 ```
 
-### Spaghetti plot
+## Spaghetti plot
 
 ``` r
 graph_1 = control_df %>% 
@@ -114,6 +105,7 @@ graph_1 = control_df %>%
 
 graph_2 = control_df %>% 
 ggplot(aes(x = No_week, y = measurement, group = ID)) +
+  geom_point(aes(color = Arm), size = 1.5, alpha = 0.4) +
   geom_line(aes(color = Arm)) + 
   facet_wrap(~ID) +
  theme(text = element_text(size = 9),

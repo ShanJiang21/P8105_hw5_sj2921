@@ -65,6 +65,7 @@ graph_1 = control_df %>%
 
 graph_2 = control_df %>% 
 ggplot(aes(x = No_week, y = measurement, group = ID)) +
+  geom_point(aes(color = Arm), size = 1.5, alpha = 0.4) +
   geom_line(aes(color = Arm)) + 
   facet_wrap(~ID) +
  theme(text = element_text(size = 9),
@@ -165,11 +166,10 @@ city_sum = map_df(.x = raw_result, ~.x %>%
 ###  Plot that shows the estimates and CIs for each city 
 
 Organize cities according to the proportion of unsolved homicides.
-```{r fig.width= 12, fig.height=10,echo=FALSE}
+```{r fig.width= 17, fig.height= 10,echo=FALSE}
 city_sum %>% 
   mutate(city_state = factor(city_state, levels = city_state[order(estimate)])) %>% 
-  ggplot(aes(x = city_state , y = estimate)) +
-  ylim(0, 0.8) +
+  ggplot(aes(x = city_state , y = estimate, color = city_state)) +
   geom_point(size = 1 ) +
   geom_errorbar(aes(ymin = conf.low , ymax = conf.high), width = .6) +
   theme_bw() +
@@ -180,8 +180,16 @@ city_sum %>%
     caption = "Data from the Washington Post"
   ) +
   theme(
-    axis.text.x = element_text(angle = 90, size = 7)
-  ) 
+    axis.text.x = element_text(angle = 90, size = 9),
+    axis.text.y = element_text(size = 12),
+    plot.title = element_text(size = 15, face = "bold.italic"),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    legend.position = "bottom", 
+    legend.text = element_text(size = 7)
+    
+)
+
 
 ```
 
