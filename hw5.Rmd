@@ -20,7 +20,7 @@ set.seed(1)
 file_path <- "./data/"
 length(list.files(file_path))  # How many files are there?
 list.files(file_path)  # Show all names
-list.files(file_path)[11:20]  # Show last 10 names
+
 
 ```
 
